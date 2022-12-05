@@ -10,21 +10,22 @@ import (
 	"time"
 )
 
+var (
+	exitnodes   = nodemanager{addresses: map[string]struct{}{}}
+	lastFetched = time.Now()
+)
+
 type nodemanager struct {
 	sync.RWMutex
 	addresses map[string]struct{}
 }
-
-var (
-	exitnodes = nodemanager{addresses: map[string]struct{}{}}
-)
 
 // IsExitNode returns true if an address is a known Tor exit node, false
 // otherwise.
 func IsExitNode(address string) (bool, error) {
 	exitnodes.RLock()
 
-	if len(exitnodes.addresses) == 0 {
+	if len(exitnodes.addresses) == 0 || time.Now().After(lastFetched.Add(45*time.Minute)) {
 		exitnodes.RUnlock()
 
 		if err := refreshAddresses(); err != nil {
@@ -47,7 +48,7 @@ func IsExitNode(address string) (bool, error) {
 func ExitNodes() []string {
 	exitnodes.RLock()
 
-	if len(exitnodes.addresses) == 0 {
+	if len(exitnodes.addresses) == 0 || time.Now().After(lastFetched.Add(45*time.Minute)) {
 		exitnodes.RUnlock()
 
 		if err := refreshAddresses(); err != nil {
@@ -69,35 +70,53 @@ func ExitNodes() []string {
 }
 
 func refreshAddresses() error {
-	/* aggregate addresses */
+	/* aggregate addresses concurrently */
 
-	sources := []string{
-		"https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
+	sources := map[string][]byte{
+		"https://check.torproject.org/torbulkexitlist":                                                  []byte{},
+		"https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst": []byte{},
+		// "https://www.dan.me.uk/torlist/?exit": []byte{},
 	}
+
+	wg := sync.WaitGroup{}
+
+	for url, _ := range sources {
+		wg.Add(1)
+
+		go (func(url string) {
+			defer wg.Done()
+
+			req, err := http.NewRequest(http.MethodGet, url, nil)
+
+			if err != nil {
+				return
+			}
+
+			client := http.Client{
+				Timeout: 3 * time.Second,
+			}
+
+			res, err := client.Do(req)
+
+			if err != nil {
+				return
+			}
+
+			if bs, err := io.ReadAll(res.Body); err == nil {
+				sources[url] = bs
+			}
+		})(url)
+	}
+
+	wg.Wait()
+
+	/* merge / dedupe all addresses */
 
 	addresses := map[string]struct{}{}
 
-	for _, url := range sources {
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-
-		if err != nil {
-			continue
-		}
-
-		client := http.Client{
-			Timeout: 3 * time.Second,
-		}
-
-		res, err := client.Do(req)
-
-		if err != nil {
-			continue
-		}
-
-		if bs, err := io.ReadAll(res.Body); err == nil {
-			for _, addrbs := range bytes.Fields(bs) {
-				addresses[string(addrbs)] = struct{}{}
-			}
+	for _, bs := range sources {
+		for _, addrbs := range bytes.Fields(bs) {
+			addresses[string(addrbs)] = struct{}{}
 		}
 	}
 
