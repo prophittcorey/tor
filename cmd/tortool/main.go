@@ -9,29 +9,28 @@ import (
 
 func main() {
 	var ip string
-	var list bool
+	var exitnodes bool
 
-	flag.StringVar(&ip, "ip", "", "an ip address to analyze")
-	flag.BoolVar(&list, "list", false, "if set, the tool will dump a list of all known IP addresses")
+	flag.StringVar(&ip, "ip", "", "an ip address to analyze (returns 'true' if it's an exit node, 'false' otherwise")
+	flag.BoolVar(&exitnodes, "exitnodes", false, "if specified, a list of all known exit node IP addresses will be printed")
 
 	flag.Parse()
 
-	if list {
-		fmt.Printf("123.123.123.123\n111.111.111.111\n")
+	if len(ip) > 0 {
+		if val, err := tor.IsExitNode(ip); err == nil {
+			fmt.Println(val)
+		}
 
 		return
 	}
 
-	if len(ip) == 0 {
-		flag.Usage()
+	if exitnodes {
+		for _, address := range tor.ExitNodes() {
+			fmt.Println(address)
+		}
+
 		return
 	}
 
-	val, err := tor.IsExitNode(ip)
-
-	if err != nil {
-		fmt.Printf("error checking address; %s\n", err)
-	}
-
-	fmt.Printf("%s: %v\n", ip, val)
+	flag.Usage()
 }
