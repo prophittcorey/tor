@@ -2,14 +2,27 @@
 
 Analyze and locate IP addresses coming from the Tor network.
 
-## Usage
+## Package Usage
 
 ```golang
 import "github.com/prophittcorey/tor"
 
-tor.IsExitNode("46.182.21.250") // => true, nil
+tor.IsExitNode("46.182.21.250") // => true, err
 
 tor.ExitNodes() // => ["46.182.21.250", ...]
+```
+
+## Tool Installation and Usage
+
+```bash
+# Install the latest tool.
+$ go install github.com/prophittcorey/tor/cmd/tortool@latest
+
+# Dump all exit nodes.
+$ tortool --exitnodes
+
+# Check a specific IP address.
+$ tortool --ip 46.182.21.250
 ```
 
 ## License
