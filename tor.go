@@ -13,6 +13,12 @@ import (
 var (
 	exitnodes   = nodemanager{addresses: map[string]struct{}{}}
 	lastFetched = time.Now()
+
+	// RefreshInterval is how often we will re-fetch exit nodes.
+	RefreshInterval = 45 * time.Minute
+
+	// UserAgent will be used to set the UserAgent header for all HTTP requests.
+	UserAgent = "github.com/prophittcorey/tor"
 )
 
 type nodemanager struct {
@@ -25,7 +31,7 @@ type nodemanager struct {
 func IsExitNode(address string) (bool, error) {
 	exitnodes.RLock()
 
-	if len(exitnodes.addresses) == 0 || time.Now().After(lastFetched.Add(45*time.Minute)) {
+	if len(exitnodes.addresses) == 0 || time.Now().After(lastFetched.Add(RefreshInterval)) {
 		exitnodes.RUnlock()
 
 		if err := refreshAddresses(); err != nil {
@@ -48,7 +54,7 @@ func IsExitNode(address string) (bool, error) {
 func ExitNodes() []string {
 	exitnodes.RLock()
 
-	if len(exitnodes.addresses) == 0 || time.Now().After(lastFetched.Add(45*time.Minute)) {
+	if len(exitnodes.addresses) == 0 || time.Now().After(lastFetched.Add(RefreshInterval)) {
 		exitnodes.RUnlock()
 
 		if err := refreshAddresses(); err != nil {
@@ -92,6 +98,8 @@ func refreshAddresses() error {
 				return
 			}
 
+			req.Header.Set("User-Agent", UserAgent)
+
 			client := http.Client{
 				Timeout: 3 * time.Second,
 			}
@@ -115,8 +123,8 @@ func refreshAddresses() error {
 	addresses := map[string]struct{}{}
 
 	for _, bs := range sources {
-		for _, addrbs := range bytes.Fields(bs) {
-			addresses[string(addrbs)] = struct{}{}
+		for _, ipaddress := range bytes.Fields(bs) {
+			addresses[string(ipaddress)] = struct{}{}
 		}
 	}
 
@@ -124,9 +132,10 @@ func refreshAddresses() error {
 
 	exitnodes.Lock()
 
-	defer exitnodes.Unlock()
-
 	exitnodes.addresses = addresses
+	lastFetched = time.Now()
+
+	exitnodes.Unlock()
 
 	return nil
 }
