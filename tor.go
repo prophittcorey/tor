@@ -14,6 +14,12 @@ var (
 	exitnodes   = nodemanager{addresses: map[string]struct{}{}}
 	lastFetched = time.Now()
 
+	sources = map[string][]byte{
+		"https://check.torproject.org/torbulkexitlist":                                                  []byte{},
+		"https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst": []byte{},
+		// "https://www.dan.me.uk/torlist/?exit": []byte{},
+	}
+
 	// RefreshInterval is how often we will re-fetch exit nodes.
 	RefreshInterval = 45 * time.Minute
 
@@ -77,12 +83,6 @@ func ExitNodes() []string {
 
 func refreshAddresses() error {
 	/* aggregate addresses concurrently */
-
-	sources := map[string][]byte{
-		"https://check.torproject.org/torbulkexitlist":                                                  []byte{},
-		"https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst": []byte{},
-		// "https://www.dan.me.uk/torlist/?exit": []byte{},
-	}
 
 	wg := sync.WaitGroup{}
 
