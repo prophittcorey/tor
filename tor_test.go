@@ -14,7 +14,7 @@ func TestExitNodes(t *testing.T) {
 
 	defer svr.Close()
 
-	sources = map[string][]byte{
+	Sources = map[string][]byte{
 		svr.URL: []byte{},
 	}
 
@@ -32,7 +32,7 @@ func TestIsExitNode(t *testing.T) {
 
 	defer svr.Close()
 
-	sources = map[string][]byte{
+	Sources = map[string][]byte{
 		svr.URL: []byte{},
 	}
 
