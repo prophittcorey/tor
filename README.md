@@ -1,5 +1,7 @@
 # Tor
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/prophittcorey/tor.svg)](https://pkg.go.dev/github.com/prophittcorey/tor)
+
 Analyze and locate IP addresses coming from the Tor network.
 
 ## Package Usage
@@ -12,7 +14,7 @@ tor.IsExitNode("46.182.21.250") // => true, err
 tor.ExitNodes() // => ["46.182.21.250", ...]
 ```
 
-## Tool Installation and Usage
+## Tool Usage
 
 ```bash
 # Install the latest tool.
