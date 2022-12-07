@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/prophittcorey/tor.svg)](https://pkg.go.dev/github.com/prophittcorey/tor)
 
-Analyze and locate IP addresses coming from the Tor network.
+Analyze and identify IP addresses coming from the Tor network.
 
 ## Package Usage
 
