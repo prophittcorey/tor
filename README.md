@@ -18,13 +18,13 @@ tor.ExitNodes() // => ["46.182.21.250", ...]
 
 ```bash
 # Install the latest tool.
-$ go install github.com/prophittcorey/tor/cmd/tortool@latest
+go install github.com/prophittcorey/tor/cmd/tortool@latest
 
 # Dump all exit nodes.
-$ tortool --exitnodes
+tortool --exitnodes
 
 # Check a specific IP address.
-$ tortool --ip 46.182.21.250
+tortool --ip 46.182.21.250
 ```
 
 ## License
